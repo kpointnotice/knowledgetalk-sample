@@ -16,9 +16,10 @@ const options = {
   }
 
 //라우팅
-app.get('/p2p', (req, res) => {
-    res.sendFile(__dirname + '/public/p2p.html');
-})
+app.get('/p2p', (req, res) => res.sendFile(__dirname + '/public/p2p.html'));
+app.get('/group', (req, res) => res.sendFile(__dirname + '/public/group.html'));
+
+
 
 //서버 실행
 https.createServer(options, app).listen(process.env.PORT, () => {

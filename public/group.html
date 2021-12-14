@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="stylesheet" href="https://unpkg.com/mvp.css">
-    <title>p2p sample</title>
+    <title>Test Module</title>
     <style>
         #roomIdInput {
             padding: 10px; width: 200px; margin: 5px;
@@ -16,26 +16,28 @@
 
         #videoBox{display:inline-grid;grid-template-columns:repeat(auto-fill,minmax(100%,auto))}
         #videoBox video { width: 100%; }
+
     </style>
 </head>
 <body>
     <div>
         <input type="text" name="roomIdInput" id="roomIdInput" placeholder="room id"/>
-        <button id="createRoomBtn" disabled>CreateRoom</button>
+        <button id="createVideoRoomBtn" disabled>CreateVideoRoom</button>
         <button id="joinRoomBtn" disabled>JoinRoom</button>
-        <button id="p2pBtn" disabled>p2p</button>
+        <button id="publishBtn" disabled>Publish</button>
+    </div>
     <div id="videoBox"></div>
-    
+
     <div id="printBox"></div>
 
-    <script type="text/javascript" src="https://dev.knowledgetalk.co.kr:7102/knowledgetalk.min.js"></script>
+    <script type="text/javascript" src="https://dev.knowledgetalk.co.kr:7102/knowledgetalk.min.js"></script>    
     <script>
-        const createRoomBtn = document.getElementById('createRoomBtn');
+        const createVideoRoomBtn = document.getElementById('createVideoRoomBtn');
         const joinRoomBtn = document.getElementById('joinRoomBtn');
         const roomIdInput = document.getElementById('roomIdInput');
-        const p2pBtn = document.getElementById('p2pBtn');
-        const videoBox = document.getElementById('videoBox');
-        const printBox = document.getElementById("printBox")
+        const publishBtn = document.getElementById('publishBtn');
+        const videoBox = document.getElementById('videoBox');        
+        const printBox = document.getElementById("printBox");
 
         //멤버
         let members = {};
@@ -50,23 +52,21 @@
                 return;
             }       
             
-            createRoomBtn.disabled = false;
+            createVideoRoomBtn.disabled = false;
             joinRoomBtn.disabled = false;
         })
 
         /******************** 버튼 이벤트 ********************/
 
-
-        createRoomBtn.addEventListener('click', async () => {
-            let roomData = await knowledgetalk.createRoom();
-
+        createVideoRoomBtn.addEventListener('click', async () => {
+            //미디어서버용 방 만들기
+            let roomData = await knowledgetalk.createVideoRoom();
             if(roomData.code !== '200'){
                 alert('createRoom failed!');
                 return;
             }
-
             roomIdInput.value = roomData.roomId;
-            createRoomBtn.disabled = true;
+            createVideoRoomBtn.disabled = true;
         })
 
         joinRoomBtn.addEventListener('click', async () => {
@@ -74,32 +74,36 @@
 
             //방 입장
             let roomData = await knowledgetalk.joinRoom(roomId);
-            
+
             if(roomData.code !== '200'){
                 alert('joinRoom failed!');
                 return;
             }
+
             members = roomData.members;
             for(const member in members){
                 if(member === knowledgetalk.userId) continue;
                 createVideoBox(member)
             }
 
+            createVideoRoomBtn.disabled = true;
             joinRoomBtn.disabled = true;
-            p2pBtn.disabled = false;
+
+            publishBtn.disabled = false;
         })
 
-        p2pBtn.addEventListener('click', async () => {
-            let targetId = prompt('상대방 id 입력');
-            let localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+        publishBtn.addEventListener('click', async () => {
+            let localStream = await navigator.mediaDevices.getUserMedia({video: {width: 640, height: 380}, audio: false});
             createVideoBox(knowledgetalk.userId);
             document.getElementById('multiVideo-' + knowledgetalk.userId).srcObject = localStream;
 
-            //다른 user 에게 영상 송신
-            await knowledgetalk.publishP2P(targetId, 'cam', localStream);
+            //미디어 서버에 영상 송신
+            let result = await knowledgetalk.publishVideo('cam', localStream);
+            if(!result){
+                alert('publish video failed!');
+            }
         })
 
-        //메시지 이벤트
         knowledgetalk.addEventListener('presence', async event => {
             let msg = event.detail;
             socketLog('receive', msg);
@@ -116,14 +120,17 @@
                     removeVideoBox(msg.user);
                 break;
 
-                //다른 user 의 영상 연결 완료(p2p)
-                case 'subscribed':
-                    document.getElementById('multiVideo-' + msg.user).srcObject = knowledgetalk.streams[msg.user];
-                    p2pBtn.disabled = false;
+                //미디어서버로부터 다른 user 의 영상 수신이 가능 한 상태
+                case 'publish':
+                    for(const feed of msg.feeds){
+                        //영상 수신 요청
+                        let stream = await knowledgetalk.subscribeVideo(feed.id, feed.type)
+                        document.getElementById('multiVideo-' + feed.id).srcObject = stream;
+                    }
                 break;
             }
         })
-    
+
         //video box 생성
         const createVideoBox = id => {
             let videoContainer = document.createElement('div');
@@ -161,6 +168,7 @@
             textLine.appendChild(textContents);
             printBox.appendChild(textLine);
         }
+
 
     </script>
 </body>
