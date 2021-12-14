@@ -1,0 +1,19 @@
+{
+  "name": "knowledgetalk-sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js --delays 2s"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-kpoint:kpointnotice/knowledgetalk-sample.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
