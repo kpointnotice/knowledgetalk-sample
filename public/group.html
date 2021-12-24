@@ -82,7 +82,7 @@
 
             members = roomData.members;
             for(const member in members){
-                if(member === knowledgetalk.userId) continue;
+                if(member === knowledgetalk.getUserId()) continue;
                 createVideoBox(member)
             }
 
@@ -94,8 +94,8 @@
 
         publishBtn.addEventListener('click', async () => {
             let localStream = await navigator.mediaDevices.getUserMedia({video: {width: 640, height: 380}, audio: false});
-            createVideoBox(knowledgetalk.userId);
-            document.getElementById('multiVideo-' + knowledgetalk.userId).srcObject = localStream;
+            createVideoBox(knowledgetalk.getUserId());
+            document.getElementById('multiVideo-' + knowledgetalk.getUserId()).srcObject = localStream;
 
             //미디어 서버에 영상 송신
             let result = await knowledgetalk.publishVideo('cam', localStream);

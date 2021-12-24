@@ -81,7 +81,7 @@
             }
             members = roomData.members;
             for(const member in members){
-                if(member === knowledgetalk.userId) continue;
+                if(member === knowledgetalk.getUserId()) continue;
                 createVideoBox(member)
             }
 
@@ -92,8 +92,8 @@
         p2pBtn.addEventListener('click', async () => {
             let targetId = prompt('상대방 id 입력');
             let localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
-            createVideoBox(knowledgetalk.userId);
-            document.getElementById('multiVideo-' + knowledgetalk.userId).srcObject = localStream;
+            createVideoBox(knowledgetalk.getUserId());
+            document.getElementById('multiVideo-' + knowledgetalk.getUserId()).srcObject = localStream;
 
             //다른 user 에게 영상 송신
             await knowledgetalk.publishP2P(targetId, 'cam', localStream);
@@ -118,7 +118,7 @@
 
                 //다른 user 의 영상 연결 완료(p2p)
                 case 'subscribed':
-                    document.getElementById('multiVideo-' + msg.user).srcObject = knowledgetalk.streams[msg.user];
+                    document.getElementById('multiVideo-' + msg.user).srcObject = knowledgetalk.getStream(msg.user);
                     p2pBtn.disabled = false;
                 break;
             }
